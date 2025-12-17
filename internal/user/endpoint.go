@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 type (
@@ -67,17 +69,28 @@ func makeCreateEndpoint(s Service) Controller {
 
 func makeGetEndpoint(s Service) Controller {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Delete user")
-		json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+		path := mux.Vars(r)
+		id := path["id"]
+		user, err := s.Get(id)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(ErrorRes{"user does not exist"})
+			return
+		}
 
+		json.NewEncoder(w).Encode(user)
 	}
 }
 
 func makeGetAllEndpoint(s Service) Controller {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Delete user")
-		json.NewEncoder(w).Encode(map[string]bool{"ok": true})
-
+		users, err := s.GetAll()
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(ErrorRes{err.Error()})
+			return
+		}
+		json.NewEncoder(w).Encode(users)
 	}
 }
 
@@ -91,8 +104,14 @@ func makeUpdateEndpoint(s Service) Controller {
 
 func makeDeleteEndpoint(s Service) Controller {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Delete user")
-		json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+		path := mux.Vars(r)
+		id := path["id"]
+		err := s.Delete(id)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(ErrorRes{err.Error()})
+		}
+		json.NewEncoder(w).Encode(map[string]string{"response": "deleted complete"})
 
 	}
 }

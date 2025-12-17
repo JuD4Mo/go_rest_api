@@ -4,6 +4,9 @@ import "log"
 
 type Service interface {
 	Create(firstName, lastName, email, phone string) (*User, error)
+	GetAll() ([]User, error)
+	Get(id string) (*User, error)
+	Delete(id string) error
 }
 
 type service struct {
@@ -31,4 +34,26 @@ func (s service) Create(firstName, lastName, email, phone string) (*User, error)
 	}
 
 	return &user, nil
+}
+
+func (s service) GetAll() ([]User, error) {
+	usersResult, err := s.repo.GetAll()
+	if err != nil {
+		return nil, err
+	}
+
+	return usersResult, nil
+}
+
+func (s service) Get(id string) (*User, error) {
+	userResult, err := s.repo.Get(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return userResult, nil
+}
+
+func (s service) Delete(id string) error {
+	return s.repo.Delete(id)
 }
