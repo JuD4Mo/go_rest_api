@@ -1,17 +1,13 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/JuD4Mo/go_rest_api/internal/user"
+	"github.com/JuD4Mo/go_rest_api/pkg/bootstrap"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 )
 
 func main() {
@@ -23,23 +19,12 @@ func main() {
 	_ = godotenv.Load()
 
 	//Instanciamos un logger propio
-	l := log.New(os.Stdout, "", log.LstdFlags|log.Lshortfile)
+	l := bootstrap.InitLogger()
 
-	//Contruímos el string de conexión a la bd por medio de los envs
-	dsn := fmt.Sprintf("%s:%s@(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
-		os.Getenv("DATABASE_USER"),
-		os.Getenv("DATABASE_PASSWORD"),
-		os.Getenv("DATABASE_HOST"),
-		os.Getenv("DATABASE_PORT"),
-		os.Getenv("DATABASE_NAME"),
-	)
-
-	//Abrimos la instancia de base de datos por medio de GORM y la inicializamos en modo debug
-	db, _ := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-	db = db.Debug()
-
-	//Migra el "modelo" a una tabla SQL
-	_ = db.AutoMigrate(user.User{})
+	db, err := bootstrap.DBConnection()
+	if err != nil {
+		l.Fatal(err)
+	}
 
 	//Instancias de las capas: repositorio, servicio y controlador
 	userRepo := user.NewRepo(l, db)
@@ -62,9 +47,9 @@ func main() {
 	}
 
 	//Se sirve la aplicación y se le vanta el servidor
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	if err != nil {
-		log.Fatal(err)
+		l.Fatal(err)
 	}
 
 	// port := ":3000"

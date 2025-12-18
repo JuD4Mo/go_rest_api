@@ -2,7 +2,6 @@ package user
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -23,6 +22,13 @@ type (
 		FirstName string `json:"last_name"`
 		Email     string `json:"email"`
 		Phone     string `json:"phone"`
+	}
+
+	UpdateReq struct {
+		LastName  *string `json:"first_name"`
+		FirstName *string `json:"last_name"`
+		Email     *string `json:"email"`
+		Phone     *string `json:"phone"`
 	}
 
 	ErrorRes struct {
@@ -96,9 +102,40 @@ func makeGetAllEndpoint(s Service) Controller {
 
 func makeUpdateEndpoint(s Service) Controller {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Delete user")
-		json.NewEncoder(w).Encode(map[string]bool{"ok": true})
+		var updateReq UpdateReq
 
+		err := json.NewDecoder(r.Body).Decode(&updateReq)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(ErrorRes{err.Error()})
+			return
+		}
+
+		//validaciones
+
+		if updateReq.FirstName != nil && *updateReq.FirstName == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(ErrorRes{"first name is required"})
+			return
+		}
+
+		if updateReq.LastName != nil && *updateReq.LastName == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(ErrorRes{"last name is required"})
+			return
+		}
+
+		path := mux.Vars(r)
+		id := path["id"]
+
+		err = s.Update(id, updateReq.FirstName, updateReq.LastName, updateReq.Email, updateReq.Phone)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(ErrorRes{"user does not exist"})
+			return
+		}
+
+		json.NewEncoder(w).Encode(map[string]string{"message": "updated!"})
 	}
 }
 
