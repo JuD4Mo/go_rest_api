@@ -10,6 +10,8 @@ type (
 		Create(name string, startDate, endDate string) (*Course, error)
 		Get(id string) (*Course, error)
 		GetAll(filters Filters, offset, limit int) ([]Course, error)
+		Update(id string, name, startDate, endDate *string) error
+		Delete(id string) error
 		Count(filters Filters) (int, error)
 	}
 
@@ -69,6 +71,34 @@ func (s service) GetAll(filters Filters, offset, limit int) ([]Course, error) {
 	}
 
 	return courses, nil
+}
+
+func (s service) Update(id string, name, startDate, endDate *string) error {
+
+	var startDateParsed *time.Time
+	var endDateParsed *time.Time
+
+	if startDate != nil && *startDate != "" {
+		date, err := time.Parse("2006-01-02", *startDate)
+		if err != nil {
+			return err
+		}
+		startDateParsed = &date
+	}
+
+	if endDate != nil && *endDate != "" {
+		date, err := time.Parse("2006-01-02", *endDate)
+		if err != nil {
+			return err
+		}
+		endDateParsed = &date
+	}
+
+	return s.repo.Update(id, name, startDateParsed, endDateParsed)
+}
+
+func (s service) Delete(id string) error {
+	return s.repo.Delete(id)
 }
 
 func (s service) Count(filters Filters) (int, error) {

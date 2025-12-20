@@ -17,12 +17,20 @@ type (
 		Create Controller
 		Get    Controller
 		GetAll Controller
+		Update Controller
+		Delete Controller
 	}
 
 	CreateReq struct {
 		Name      string `json:"name"`
 		StartDate string `json:"start_date"`
 		EndDate   string `json:"end_date"`
+	}
+
+	UpdateReq struct {
+		Name      *string `json:"name"`
+		StartDate *string `json:"start_date"`
+		EndDate   *string `json:"end_date"`
 	}
 
 	Response struct {
@@ -38,6 +46,8 @@ func MakeEndpoints(s Service) Endpoints {
 		Create: makeCreateEndpoint(s),
 		Get:    makeGetEndpoint(s),
 		GetAll: makeGetAllEndpoint(s),
+		Update: makeUpdateEndpoint(s),
+		Delete: makeDeleteEndpoint(s),
 	}
 }
 
@@ -174,6 +184,84 @@ func makeGetAllEndpoint(s Service) Controller {
 			Status: http.StatusOK,
 			Data:   courses,
 			Meta:   meta,
+		})
+	}
+}
+
+func makeUpdateEndpoint(s Service) Controller {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var updateReq UpdateReq
+
+		err := json.NewDecoder(r.Body).Decode(&updateReq)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(&Response{
+				Status: http.StatusBadRequest,
+				Err:    err.Error(),
+			})
+			return
+		}
+
+		if updateReq.Name != nil && *updateReq.Name == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(&Response{
+				Status: http.StatusBadRequest,
+				Err:    "name cannot be empty",
+			})
+			return
+		}
+
+		if updateReq.StartDate != nil && *updateReq.StartDate == "" {
+			w.WriteHeader(400)
+			json.NewEncoder(w).Encode(&Response{Status: 400, Err: "start date is required"})
+			return
+		}
+
+		if updateReq.EndDate != nil && *updateReq.EndDate == "" {
+			w.WriteHeader(400)
+			json.NewEncoder(w).Encode(&Response{Status: 400, Err: "end date is required"})
+			return
+		}
+
+		path := mux.Vars(r)
+		id := path["id"]
+
+		err = s.Update(id, updateReq.Name, updateReq.StartDate, updateReq.EndDate)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(&Response{
+				Status: http.StatusInternalServerError,
+				Err:    err.Error(),
+			})
+			return
+		}
+
+		json.NewEncoder(w).Encode(&Response{
+			Status: http.StatusOK,
+			Data:   map[string]string{"message": "updated!"},
+		})
+
+	}
+}
+
+func makeDeleteEndpoint(s Service) Controller {
+	return func(w http.ResponseWriter, r *http.Request) {
+		path := mux.Vars(r)
+		id := path["id"]
+
+		err := s.Delete(id)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(&Response{
+				Status: http.StatusBadRequest,
+				Err:    err.Error(),
+			})
+			return
+		}
+
+		json.NewEncoder(w).Encode(&Response{
+			Status: http.StatusOK,
+			Data:   map[string]string{"message": "deleted!"},
 		})
 	}
 }

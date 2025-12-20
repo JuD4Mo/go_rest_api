@@ -46,6 +46,8 @@ func main() {
 	router.HandleFunc("/courses", courseEnd.Create).Methods("POST")
 	router.HandleFunc("/courses/{id}", courseEnd.Get).Methods("GET")
 	router.HandleFunc("/courses", courseEnd.GetAll).Methods("GET")
+	router.HandleFunc("/courses/{id}", courseEnd.Update).Methods("PATCH")
+	router.HandleFunc("/courses/{id}", courseEnd.Delete).Methods("DELETE")
 
 	//Se crea una instancia de un servidor
 	srv := &http.Server{

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -13,8 +14,8 @@ type (
 		Create(course *Course) error
 		Get(id string) (*Course, error)
 		GetAll(filters Filters, offset, limit int) ([]Course, error)
-		Update()
-		Delete()
+		Update(id string, name *string, startDate, endDate *time.Time) error
+		Delete(id string) error
 		Count(filters Filters) (int, error)
 	}
 
@@ -68,12 +69,42 @@ func (repo *repo) GetAll(filters Filters, offset, limit int) ([]Course, error) {
 	return courses, nil
 }
 
-func (repo *repo) Update() {
+func (repo *repo) Update(id string, name *string, startDate, endDate *time.Time) error {
+	values := make(map[string]interface{})
 
+	if name != nil {
+		values["name"] = *name
+	}
+
+	if startDate != nil {
+		values["start_date"] = *startDate
+	}
+
+	if endDate != nil {
+		values["end_date"] = *endDate
+	}
+
+	repo.log.Println(values)
+
+	result := repo.db.Model(&Course{}).Where("id = ?", id).Updates(values)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
 }
 
-func (repo *repo) Delete() {
+func (repo *repo) Delete(id string) error {
+	course := Course{
+		ID: id,
+	}
 
+	result := repo.db.Delete(&course)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
 }
 
 func (repo *repo) Count(filters Filters) (int, error) {
@@ -92,7 +123,7 @@ func (repo *repo) Count(filters Filters) (int, error) {
 func applyFilters(tx *gorm.DB, filters Filters) *gorm.DB {
 	if filters.Name != "" {
 		filters.Name = fmt.Sprintf("%%%s%%", strings.ToLower(filters.Name))
-		tx = tx.Where("lower(first_name) like ?", filters.Name)
+		tx = tx.Where("lower(name) like ?", filters.Name)
 	}
 
 	return tx
