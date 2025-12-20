@@ -152,6 +152,7 @@ func makeGetAllEndpoint(s Service) Controller {
 			})
 			return
 		}
+
 		json.NewEncoder(w).Encode(&Response{
 			Status: http.StatusOK,
 			Data:   users,

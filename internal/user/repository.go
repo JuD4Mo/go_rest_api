@@ -57,6 +57,7 @@ func (repo *repo) Get(id string) (*User, error) {
 	user := User{ID: id}
 
 	result := repo.db.First(&user)
+	// result := repo.db.First(&user, "id = ?", id) ----> FUNCIONA DE LA MISMA MANERA pero &user es = User{}
 
 	if result.Error != nil {
 		return nil, result.Error

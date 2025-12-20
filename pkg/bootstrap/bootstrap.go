@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/JuD4Mo/go_rest_api/internal/course"
 	"github.com/JuD4Mo/go_rest_api/internal/user"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -33,6 +34,11 @@ func DBConnection() (*gorm.DB, error) {
 	if os.Getenv("DATABASE_MIGRATE") == "true" {
 		//Migra el "modelo" a una tabla SQL
 		err := db.AutoMigrate(&user.User{})
+		if err != nil {
+			return nil, err
+		}
+
+		err = db.AutoMigrate(&course.Course{})
 		if err != nil {
 			return nil, err
 		}
