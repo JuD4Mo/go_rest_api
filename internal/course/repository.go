@@ -6,14 +6,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/JuD4Mo/go_rest_api/internal/domain"
 	"gorm.io/gorm"
 )
 
 type (
 	Repository interface {
-		Create(course *Course) error
-		Get(id string) (*Course, error)
-		GetAll(filters Filters, offset, limit int) ([]Course, error)
+		Create(course *domain.Course) error
+		Get(id string) (*domain.Course, error)
+		GetAll(filters Filters, offset, limit int) ([]domain.Course, error)
 		Update(id string, name *string, startDate, endDate *time.Time) error
 		Delete(id string) error
 		Count(filters Filters) (int, error)
@@ -32,7 +33,7 @@ func NewRepo(db *gorm.DB, log *log.Logger) Repository {
 	}
 }
 
-func (repo *repo) Create(course *Course) error {
+func (repo *repo) Create(course *domain.Course) error {
 	result := repo.db.Create(course)
 	if result.Error != nil {
 		return result.Error
@@ -41,9 +42,9 @@ func (repo *repo) Create(course *Course) error {
 	return nil
 }
 
-func (repo *repo) Get(id string) (*Course, error) {
+func (repo *repo) Get(id string) (*domain.Course, error) {
 	//Como el id está poblado y GORM detecta que es la PK filtra por ese parámetro
-	course := Course{
+	course := domain.Course{
 		ID: id,
 	}
 	// result := repo.db.Model(&Course{}).Where("id = ?", id).First(&course)
@@ -55,8 +56,8 @@ func (repo *repo) Get(id string) (*Course, error) {
 	return &course, nil
 }
 
-func (repo *repo) GetAll(filters Filters, offset, limit int) ([]Course, error) {
-	var courses []Course
+func (repo *repo) GetAll(filters Filters, offset, limit int) ([]domain.Course, error) {
+	var courses []domain.Course
 	tx := repo.db.Model(&courses)
 	tx = applyFilters(tx, filters)
 	tx = tx.Limit(limit).Offset(offset)
@@ -86,7 +87,7 @@ func (repo *repo) Update(id string, name *string, startDate, endDate *time.Time)
 
 	repo.log.Println(values)
 
-	result := repo.db.Model(&Course{}).Where("id = ?", id).Updates(values)
+	result := repo.db.Model(&domain.Course{}).Where("id = ?", id).Updates(values)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -95,7 +96,7 @@ func (repo *repo) Update(id string, name *string, startDate, endDate *time.Time)
 }
 
 func (repo *repo) Delete(id string) error {
-	course := Course{
+	course := domain.Course{
 		ID: id,
 	}
 
@@ -109,7 +110,7 @@ func (repo *repo) Delete(id string) error {
 
 func (repo *repo) Count(filters Filters) (int, error) {
 	var count int64
-	tx := repo.db.Model(Course{})
+	tx := repo.db.Model(domain.Course{})
 	tx = applyFilters(tx, filters)
 
 	result := tx.Count(&count)

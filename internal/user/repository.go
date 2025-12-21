@@ -5,13 +5,14 @@ import (
 	"log"
 	"strings"
 
+	"github.com/JuD4Mo/go_rest_api/internal/domain"
 	"gorm.io/gorm"
 )
 
 type Repository interface {
-	Create(user *User) error
-	GetAll(filters Filters, offset, limit int) ([]User, error)
-	Get(id string) (*User, error)
+	Create(user *domain.User) error
+	GetAll(filters Filters, offset, limit int) ([]domain.User, error)
+	Get(id string) (*domain.User, error)
 	Delete(id string) error
 	Update(id string, firstName, lastName, email, phone *string) error
 	Count(filters Filters) (int, error)
@@ -29,7 +30,7 @@ func NewRepo(log *log.Logger, db *gorm.DB) Repository {
 	}
 }
 
-func (repo *repo) Create(user *User) error {
+func (repo *repo) Create(user *domain.User) error {
 	if err := repo.db.Create(user).Error; err != nil {
 		repo.log.Println(err)
 		return err
@@ -38,8 +39,8 @@ func (repo *repo) Create(user *User) error {
 	return nil
 }
 
-func (repo *repo) GetAll(filters Filters, offset, limit int) ([]User, error) {
-	var u []User
+func (repo *repo) GetAll(filters Filters, offset, limit int) ([]domain.User, error) {
+	var u []domain.User
 
 	tx := repo.db.Model(&u)
 	tx = applyFilters(tx, filters)
@@ -53,8 +54,8 @@ func (repo *repo) GetAll(filters Filters, offset, limit int) ([]User, error) {
 	return u, nil
 }
 
-func (repo *repo) Get(id string) (*User, error) {
-	user := User{ID: id}
+func (repo *repo) Get(id string) (*domain.User, error) {
+	user := domain.User{ID: id}
 
 	result := repo.db.First(&user)
 	// result := repo.db.First(&user, "id = ?", id) ----> FUNCIONA DE LA MISMA MANERA pero &user es = User{}
@@ -68,7 +69,7 @@ func (repo *repo) Get(id string) (*User, error) {
 
 // Delete físico y completo
 func (repo *repo) Delete(id string) error {
-	user := User{
+	user := domain.User{
 		ID: id,
 	}
 	result := repo.db.Delete(&user)
@@ -95,7 +96,7 @@ func (repo *repo) Update(id string, firstName, lastName, email, phone *string) e
 		values["phone"] = phone
 	}
 
-	res := repo.db.Model(&User{}).Where("id = ?", id).Updates(values)
+	res := repo.db.Model(&domain.User{}).Where("id = ?", id).Updates(values)
 	if res.Error != nil {
 		return res.Error
 	}
@@ -104,7 +105,7 @@ func (repo *repo) Update(id string, firstName, lastName, email, phone *string) e
 
 func (repo *repo) Count(filters Filters) (int, error) {
 	var count int64
-	tx := repo.db.Model(User{})
+	tx := repo.db.Model(domain.User{})
 	tx = applyFilters(tx, filters)
 
 	result := tx.Count(&count)

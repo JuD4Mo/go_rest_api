@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/JuD4Mo/go_rest_api/internal/course"
+	"github.com/JuD4Mo/go_rest_api/internal/enrollment"
 	"github.com/JuD4Mo/go_rest_api/internal/user"
 	"github.com/JuD4Mo/go_rest_api/pkg/bootstrap"
 	"github.com/gorilla/mux"
@@ -36,6 +37,10 @@ func main() {
 	courseService := course.NewService(l, courseRepo)
 	courseEnd := course.MakeEndpoints(courseService)
 
+	enrollRepo := enrollment.NewRepo(db, l)
+	enrollService := enrollment.NewService(l, enrollRepo, userService, courseService)
+	enrollEnd := enrollment.MakeEndpoints(enrollService)
+
 	//Por medio del router de Gorilla Mux servimos los endpoints
 	router.HandleFunc("/users", userEnd.Create).Methods("POST")
 	router.HandleFunc("/users/{id}", userEnd.Get).Methods("GET")
@@ -49,6 +54,7 @@ func main() {
 	router.HandleFunc("/courses/{id}", courseEnd.Update).Methods("PATCH")
 	router.HandleFunc("/courses/{id}", courseEnd.Delete).Methods("DELETE")
 
+	router.HandleFunc("/enrollments", enrollEnd.Create).Methods("POST")
 	//Se crea una instancia de un servidor
 	srv := &http.Server{
 		Handler:      router,

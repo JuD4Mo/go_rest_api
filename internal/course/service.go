@@ -3,13 +3,15 @@ package course
 import (
 	"log"
 	"time"
+
+	"github.com/JuD4Mo/go_rest_api/internal/domain"
 )
 
 type (
 	Service interface {
-		Create(name string, startDate, endDate string) (*Course, error)
-		Get(id string) (*Course, error)
-		GetAll(filters Filters, offset, limit int) ([]Course, error)
+		Create(name string, startDate, endDate string) (*domain.Course, error)
+		Get(id string) (*domain.Course, error)
+		GetAll(filters Filters, offset, limit int) ([]domain.Course, error)
 		Update(id string, name, startDate, endDate *string) error
 		Delete(id string) error
 		Count(filters Filters) (int, error)
@@ -32,7 +34,7 @@ func NewService(log *log.Logger, repo Repository) Service {
 	}
 }
 
-func (s service) Create(name string, startDate, endDate string) (*Course, error) {
+func (s service) Create(name string, startDate, endDate string) (*domain.Course, error) {
 
 	startDateParsed, err := time.Parse("2006-01-02", startDate)
 	if err != nil {
@@ -44,7 +46,7 @@ func (s service) Create(name string, startDate, endDate string) (*Course, error)
 		return nil, err
 	}
 
-	course := &Course{
+	course := &domain.Course{
 		Name:      name,
 		StartDate: startDateParsed,
 		EndDate:   endDateParsed,
@@ -56,7 +58,7 @@ func (s service) Create(name string, startDate, endDate string) (*Course, error)
 	return course, nil
 }
 
-func (s service) Get(id string) (*Course, error) {
+func (s service) Get(id string) (*domain.Course, error) {
 	course, err := s.repo.Get(id)
 	if err != nil {
 		return nil, err
@@ -64,7 +66,7 @@ func (s service) Get(id string) (*Course, error) {
 	return course, nil
 }
 
-func (s service) GetAll(filters Filters, offset, limit int) ([]Course, error) {
+func (s service) GetAll(filters Filters, offset, limit int) ([]domain.Course, error) {
 	courses, err := s.repo.GetAll(filters, offset, limit)
 	if err != nil {
 		return nil, err
@@ -75,8 +77,7 @@ func (s service) GetAll(filters Filters, offset, limit int) ([]Course, error) {
 
 func (s service) Update(id string, name, startDate, endDate *string) error {
 
-	var startDateParsed *time.Time
-	var endDateParsed *time.Time
+	var startDateParsed, endDateParsed *time.Time
 
 	if startDate != nil && *startDate != "" {
 		date, err := time.Parse("2006-01-02", *startDate)

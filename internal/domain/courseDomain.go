@@ -1,4 +1,4 @@
-package course
+package domain
 
 import (
 	"time"
